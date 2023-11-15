@@ -10,12 +10,27 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/donghc/crawler/collect"
+	"github.com/donghc/crawler/parse/doubangroup"
 )
 
 var headerRe = regexp.MustCompile(`<div class="small_cardcontent__BTALp"[\s\S]*?<h2>([\s\S]*?)</h2>`)
 
 func main() {
-	main2()
+	douban()
+}
+
+func doubanGroup() {
+	var workList []*collect.Request
+	for i := 25; i <= 100; i += 25 {
+		str := fmt.Sprintf("<https://www.douban.com/group/szsh/discussion?start=%d>", i)
+		workList = append(workList, &collect.Request{
+			Ulr:       str,
+			ParseFunc: doubangroup.ParseURL,
+		})
+	}
+
+	// collect.BrowserFetch{Timeout: 3 * time.Second}
+
 }
 
 func douban() {
@@ -65,23 +80,4 @@ func test() {
 	log.Printf("Go's time.After example:\\n%s", example)
 	time.Sleep(5 * time.Second)
 
-}
-
-func main2() {
-	ctx := context.Background()
-	before := time.Now()
-	preCtx, _ := context.WithTimeout(ctx, 500*time.Millisecond)
-	go func() {
-		childCtx, _ := context.WithTimeout(preCtx, 300*time.Millisecond)
-		select {
-		case <-childCtx.Done():
-			after := time.Now()
-			fmt.Println("child during:", after.Sub(before).Milliseconds())
-		}
-	}()
-	select {
-	case <-preCtx.Done():
-		after := time.Now()
-		fmt.Println("pre during:", after.Sub(before).Milliseconds())
-	}
 }
