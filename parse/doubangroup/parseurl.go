@@ -28,12 +28,19 @@ func ParseURL(contents []byte, req *collect.Request) collect.ParseResult {
 	return result
 }
 
-const ContentRe = `<div class="topic-content">[\s\S]*?阳台[\s\S]*?<div>`
+// #link-report > div
+// /html/body/div[3]/div[1]/div/div[1]/div[2]/div[2]/div[1]/div
+//const ContentRe = `<div class="rich-content topic-richtext">[\s\S]*?阳台[\s\S]*?</div>`
+
+const ContentRe = `<div\s+class="topic-content">(?s:.)*?</div>`
 
 func GetContent(contents []byte, url string) collect.ParseResult {
 	re := regexp.MustCompile(ContentRe)
+	resultStr := re.FindString(string(contents))
 
-	ok := re.Match(contents)
+	r2 := regexp.MustCompile("阳台")
+
+	ok := r2.MatchString(resultStr)
 	if !ok {
 		return collect.ParseResult{
 			Items: []interface{}{},
