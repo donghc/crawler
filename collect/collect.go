@@ -9,7 +9,8 @@ import (
 )
 
 type Fetch interface {
-	Get(url string) ([]byte, error)
+	// Get(url string) ([]byte, error)
+	Get(req *Request) ([]byte, error)
 }
 
 func DetermineEncoding(r *bufio.Reader) encoding.Encoding {

@@ -8,28 +8,27 @@ import (
 
 const cityListRe = `(https://www.douban.com/group/topic/[0-9a-z]+/)"[^>]*>([^<]+)</a>`
 
-func ParseURL(contents []byte) collect.ParseResult {
+func ParseURL(contents []byte, req *collect.Request) collect.ParseResult {
 	re := regexp.MustCompile(cityListRe)
 
 	matches := re.FindAllSubmatch(contents, -1)
+	result := collect.ParseResult{}
 
-	parseResult := collect.ParseResult{}
-
-	for _, v := range matches {
-		url := string(v[1])
-
-		parseResult.Requests = append(parseResult.Requests, &collect.Request{
-			Ulr: url,
-			ParseFunc: func(c []byte) collect.ParseResult {
-				return GetContent(c, url)
-			},
-		})
+	for _, m := range matches {
+		u := string(m[1])
+		result.Requests = append(
+			result.Requests, &collect.Request{
+				URL:    u,
+				Cookie: req.Cookie,
+				ParseFunc: func(c []byte, request *collect.Request) collect.ParseResult {
+					return GetContent(c, u)
+				},
+			})
 	}
-
-	return parseResult
+	return result
 }
 
-const ContentRe = `<div class="topic-content">[\s\S]*?阳台[\s\S]*?<div`
+const ContentRe = `<div class="topic-content">[\s\S]*?阳台[\s\S]*?<div>`
 
 func GetContent(contents []byte, url string) collect.ParseResult {
 	re := regexp.MustCompile(ContentRe)

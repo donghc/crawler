@@ -17,7 +17,7 @@ type BrowserFetch struct {
 	Proxy   proxy.ProxyFunc
 }
 
-func (fetch *BrowserFetch) Get(url string) ([]byte, error) {
+func (fetch *BrowserFetch) Get(request *Request) ([]byte, error) {
 	client := &http.Client{
 		Timeout: fetch.Timeout,
 	}
@@ -28,9 +28,13 @@ func (fetch *BrowserFetch) Get(url string) ([]byte, error) {
 		client.Transport = transport
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", request.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get url failed:%v", err)
+	}
+
+	if request.Cookie != "" {
+		req.Header.Set("Cookie", request.Cookie)
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
 	resp, err := client.Do(req)

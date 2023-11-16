@@ -12,8 +12,8 @@ import (
 type SimpleFetch struct {
 }
 
-func (fetch *SimpleFetch) Get(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func (fetch *SimpleFetch) Get(req *Request) ([]byte, error) {
+	resp, err := http.Get(req.URL)
 	if err != nil {
 		panic(err)
 	}
