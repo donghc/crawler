@@ -35,26 +35,32 @@ func doubanGroup() {
 	}
 
 	var seeds = make([]*collect.Task, 0, 1000)
-	str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", 0)
-	seeds = append(seeds, &collect.Task{
-		URL:      str,
-		WaitTime: 1 * time.Second,
-		MaxDepth: 5,
-		Fetcher:  f,
-		Cookie:   cookie,
-		RootReq: &collect.Request{
-			Method:    "GET",
-			ParseFunc: doubangroup.ParseURL,
-		},
-	})
-	// for i := 0; i <= 100; i += 25 {
-	// 	str := fmt.Sprintf("https://www.douban.com/group/szsh/discussion?start=%d", i)
-	// 	workList = append(workList, &collect.Request{
-	// 		URL:       str,
-	// 		Cookie:    cookie,
-	// 		ParseFunc: doubangroup.ParseURL,
-	// 	})
-	// }
+	//str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", 0)
+	//seeds = append(seeds, &collect.Task{
+	//	URL:      str,
+	//	WaitTime: 1 * time.Second,
+	//	MaxDepth: 5,
+	//	Fetcher:  f,
+	//	Cookie:   cookie,
+	//	RootReq: &collect.Request{
+	//		Method:    "GET",
+	//		ParseFunc: doubangroup.ParseURL,
+	//	},
+	//})
+	for i := 0; i <= 100; i += 25 {
+		str := fmt.Sprintf("https://www.douban.com/group/szsh/discussion?start=%d", i)
+		seeds = append(seeds, &collect.Task{
+			URL:      str,
+			WaitTime: 1 * time.Second,
+			MaxDepth: 5,
+			Fetcher:  f,
+			Cookie:   cookie,
+			RootReq: &collect.Request{
+				Method:    "GET",
+				ParseFunc: doubangroup.ParseURL,
+			},
+		})
+	}
 
 	schedule := engine.NewEngine(
 		engine.WithFetcher(f),

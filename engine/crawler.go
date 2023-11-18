@@ -59,7 +59,7 @@ func (c *Crawler) CreateWorker() {
 			continue
 		}
 		c.StoreVisited(r)
-		c.Logger.Sugar().Info("begin get url ", r.URL)
+		//c.Logger.Sugar().Info("begin get url ", r.URL)
 
 		body, err := r.Task.Fetcher.Get(r)
 		if err != nil {

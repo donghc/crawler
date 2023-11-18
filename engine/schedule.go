@@ -32,9 +32,9 @@ func (s *Schedule) Pull() *collect.Request {
 }
 
 func (s *Schedule) Schedule() {
+	var req *collect.Request
+	var ch chan *collect.Request
 	for {
-		var req *collect.Request
-		var ch chan *collect.Request
 		//如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
 		if len(s.reqQueue) > 0 {
 			req = s.reqQueue[0]
