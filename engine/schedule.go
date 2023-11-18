@@ -24,25 +24,26 @@ func NewSchedule(opts ...Option) *Schedule {
 }
 
 func (s *Schedule) Run() {
-	requestCh := make(chan *collect.Request)
-	workerCh := make(chan *collect.Request)
-	out := make(chan collect.ParseResult)
-
-	s.requestCh = requestCh
-	s.workerCh = workerCh
-	s.out = out
-
-	go s.Schedule()
+	s.requestCh = make(chan *collect.Request)
+	s.workerCh = make(chan *collect.Request)
+	s.out = make(chan collect.ParseResult)
 
 	for i := 0; i < s.WorkCount; i++ {
 		go s.CreateWorker()
 	}
 
+	go s.Schedule()
+
 	s.HandleResult()
 }
 
 func (s *Schedule) Schedule() {
-	var reqQueue = s.Seeds
+	var reqQueue []*collect.Request
+	for _, seed := range s.Seeds {
+		seed.RootReq.Task = seed
+		seed.RootReq.URL = seed.URL
+		reqQueue = append(reqQueue, seed.RootReq)
+	}
 	go func() {
 		for {
 			var req *collect.Request
@@ -55,6 +56,9 @@ func (s *Schedule) Schedule() {
 			}
 			select {
 			case r := <-s.requestCh:
+				if req != nil {
+					reqQueue = append(reqQueue, req)
+				}
 				reqQueue = append(reqQueue, r)
 			case ch <- req:
 			}
@@ -66,6 +70,10 @@ func (s *Schedule) Schedule() {
 func (s *Schedule) CreateWorker() {
 	for {
 		r := <-s.workerCh
+		if r.CheckDepth() {
+			s.Logger.Sugar().Warn("current depth 超过最大限制")
+			continue
+		}
 		s.Logger.Sugar().Info("begin get url ", r.URL)
 		body, err := s.Fetch.Get(r)
 		if err != nil {

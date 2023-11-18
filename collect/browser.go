@@ -33,8 +33,8 @@ func (fetch *BrowserFetch) Get(request *Request) ([]byte, error) {
 		return nil, fmt.Errorf("get url failed:%v", err)
 	}
 
-	if request.Cookie != "" {
-		req.Header.Set("Cookie", request.Cookie)
+	if request.Task.Cookie != "" {
+		req.Header.Set("Cookie", request.Task.Cookie)
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
 	resp, err := client.Do(req)

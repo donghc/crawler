@@ -8,8 +8,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 )
 
-type Fetch interface {
-	// Get(url string) ([]byte, error)
+type Fetcher interface {
 	Get(req *Request) ([]byte, error)
 }
 

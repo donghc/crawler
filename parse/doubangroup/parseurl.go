@@ -16,14 +16,14 @@ func ParseURL(contents []byte, req *collect.Request) collect.ParseResult {
 
 	for _, m := range matches {
 		u := string(m[1])
-		result.Requests = append(
-			result.Requests, &collect.Request{
-				URL:    u,
-				Cookie: req.Cookie,
-				ParseFunc: func(c []byte, request *collect.Request) collect.ParseResult {
-					return GetContent(c, u)
-				},
-			})
+		result.Requests = append(result.Requests, &collect.Request{
+			Task:  req.Task,
+			URL:   u,
+			Depth: req.Depth + 1,
+			ParseFunc: func(c []byte, request *collect.Request) collect.ParseResult {
+				return GetContent(c, u)
+			},
+		})
 	}
 	return result
 }
