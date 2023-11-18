@@ -8,97 +8,46 @@ import (
 type Schedule struct {
 	requestCh chan *collect.Request // requestCh 通道接收来自外界的请求 并将请求存储到 reqQueue 队列中
 	workerCh  chan *collect.Request //
-	out       chan collect.ParseResult
-	options
+	reqQueue  []*collect.Request    //
+	Logger    *zap.Logger
 }
 
-func NewSchedule(opts ...Option) *Schedule {
-	o := defaultOptions
-	for _, opt := range opts {
-		opt(&o)
-	}
+func NewSchedule() *Schedule {
 	s := &Schedule{}
-	s.options = o
-	return s
-
-}
-
-func (s *Schedule) Run() {
 	s.requestCh = make(chan *collect.Request)
 	s.workerCh = make(chan *collect.Request)
-	s.out = make(chan collect.ParseResult)
 
-	for i := 0; i < s.WorkCount; i++ {
-		go s.CreateWorker()
+	return s
+}
+
+func (s *Schedule) Push(reqs ...*collect.Request) {
+	for _, req := range reqs {
+		s.requestCh <- req
 	}
+}
 
-	go s.Schedule()
-
-	s.HandleResult()
+func (s *Schedule) Pull() *collect.Request {
+	r := <-s.workerCh
+	return r
 }
 
 func (s *Schedule) Schedule() {
-	var reqQueue []*collect.Request
-	for _, seed := range s.Seeds {
-		seed.RootReq.Task = seed
-		seed.RootReq.URL = seed.URL
-		reqQueue = append(reqQueue, seed.RootReq)
-	}
-	go func() {
-		for {
-			var req *collect.Request
-			var ch chan *collect.Request
-			//如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
-			if len(reqQueue) > 0 {
-				req = reqQueue[0]
-				reqQueue = reqQueue[1:]
-				ch = s.workerCh
-			}
-			select {
-			case r := <-s.requestCh:
-				if req != nil {
-					reqQueue = append(reqQueue, req)
-				}
-				reqQueue = append(reqQueue, r)
-			case ch <- req:
-			}
-		}
-	}()
-}
-
-// CreateWorker 创建 worker
-func (s *Schedule) CreateWorker() {
 	for {
-		r := <-s.workerCh
-		if r.CheckDepth() {
-			s.Logger.Sugar().Warn("current depth 超过最大限制")
-			continue
+		var req *collect.Request
+		var ch chan *collect.Request
+		//如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
+		if len(s.reqQueue) > 0 {
+			req = s.reqQueue[0]
+			s.reqQueue = s.reqQueue[1:]
+			ch = s.workerCh
 		}
-		s.Logger.Sugar().Info("begin get url ", r.URL)
-		body, err := s.Fetch.Get(r)
-		if err != nil {
-			s.Logger.Error("can not fetch ", zap.Error(err))
-			continue
-		}
-		result := r.ParseFunc(body, r)
-		s.out <- result
-	}
-}
-
-// HandleResult 处理爬取并解析后的数据结构
-func (s *Schedule) HandleResult() {
-	for {
 		select {
-		case result := <-s.out:
-			for _, req := range result.Requests {
-				// 继续添加
-				s.Logger.Sugar().Info("继续添加爬虫链接 ", req.URL)
-				s.requestCh <- req
+		case r := <-s.requestCh:
+			if req != nil {
+				s.reqQueue = append(s.reqQueue, req)
 			}
-			for _, item := range result.Items {
-				s.Logger.Sugar().Info("获取结果 ", item)
-			}
-
+			s.reqQueue = append(s.reqQueue, r)
+		case ch <- req:
 		}
 	}
 }

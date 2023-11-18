@@ -8,10 +8,11 @@ import (
 type Option func(opts *options)
 
 type options struct {
-	Seeds     []*collect.Task
 	WorkCount int //并发度
-	Fetch     collect.Fetcher
+	Fetcher   collect.Fetcher
+	Seeds     []*collect.Task
 	Logger    *zap.Logger
+	scheduler Scheduler
 }
 
 var defaultOptions = options{
@@ -26,7 +27,7 @@ func WithLogger(logger *zap.Logger) Option {
 
 func WithFetcher(f collect.Fetcher) Option {
 	return func(opts *options) {
-		opts.Fetch = f
+		opts.Fetcher = f
 	}
 }
 func WithWorkCount(workCount int) Option {
@@ -37,5 +38,11 @@ func WithWorkCount(workCount int) Option {
 func WithSeeds(seed []*collect.Task) Option {
 	return func(opts *options) {
 		opts.Seeds = seed
+	}
+}
+
+func WithScheduler(scheduler Scheduler) Option {
+	return func(opts *options) {
+		opts.scheduler = scheduler
 	}
 }
