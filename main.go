@@ -44,6 +44,7 @@ func doubanGroup() {
 			Fetcher:  f,
 			Cookie:   cookie,
 			RootReq: &collect.Request{
+				Priority:  1,
 				Method:    "GET",
 				ParseFunc: doubangroup.ParseURL,
 			},

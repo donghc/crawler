@@ -12,19 +12,20 @@ type Task struct {
 	URL         string        // 表示要访问的网站
 	Cookie      string        // cookie
 	WaitTime    time.Duration // 默认等待时间
-	MaxDepth    int           //最大深度
-	RootReq     *Request      //任务中的第一请求
+	MaxDepth    int           // 最大深度
+	RootReq     *Request      // 任务中的第一请求
 	Visited     map[string]bool
 	VisitedLock sync.Mutex
 	Fetcher     Fetcher
 }
 
 type Request struct {
-	unique    string //唯一标识
+	unique    string // 唯一标识
 	Task      *Task
 	URL       string                             // 表示要访问的网站
 	Method    string                             // 方法
-	Depth     int                                //当前深度
+	Depth     int                                // 当前深度
+	Priority  int                                // 优先级
 	ParseFunc func([]byte, *Request) ParseResult // ParseFunc 函数会解析从网站获取到的网站信息，并返回 Requests 数组用于进一步获取数据。而 Items 表示获取到的数据。
 }
 

@@ -1,15 +1,17 @@
 package engine
 
 import (
-	"github.com/donghc/crawler/collect"
 	"go.uber.org/zap"
+
+	"github.com/donghc/crawler/collect"
 )
 
 type Schedule struct {
-	requestCh chan *collect.Request // requestCh 通道接收来自外界的请求 并将请求存储到 reqQueue 队列中
-	workerCh  chan *collect.Request //
-	reqQueue  []*collect.Request    //
-	Logger    *zap.Logger
+	requestCh   chan *collect.Request // requestCh 通道接收来自外界的请求 并将请求存储到 reqQueue 队列中
+	workerCh    chan *collect.Request //
+	priReqQueue []*collect.Request    // 优先级队列
+	reqQueue    []*collect.Request    //
+	Logger      *zap.Logger
 }
 
 func NewSchedule() *Schedule {
@@ -35,19 +37,57 @@ func (s *Schedule) Schedule() {
 	var req *collect.Request
 	var ch chan *collect.Request
 	for {
-		//如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
-		if len(s.reqQueue) > 0 {
+		if req == nil && len(s.priReqQueue) > 0 {
+			req = s.priReqQueue[0]
+			s.priReqQueue = s.priReqQueue[1:]
+			ch = s.workerCh
+		}
+		if req == nil && len(s.reqQueue) > 0 {
 			req = s.reqQueue[0]
 			s.reqQueue = s.reqQueue[1:]
 			ch = s.workerCh
 		}
+
 		select {
 		case r := <-s.requestCh:
-			if req != nil {
+			if r.Priority > 0 {
+				s.priReqQueue = append(s.priReqQueue, r)
+			} else {
+				s.reqQueue = append(s.reqQueue, r)
+			}
+		case ch <- req:
+			req = nil
+			ch = nil
+		}
+	}
+}
+func (s *Schedule) Schedule1() {
+	var req *collect.Request
+	var ch chan *collect.Request
+	for {
+		// 如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
+		if req == nil && len(s.priReqQueue) > 0 {
+			req = s.priReqQueue[0]
+			s.priReqQueue = s.priReqQueue[1:]
+			ch = s.workerCh
+		}
+		if req == nil && len(s.reqQueue) > 0 {
+			req = s.reqQueue[0]
+			s.reqQueue = s.reqQueue[1:]
+			ch = s.workerCh
+		}
+
+		select {
+		case r := <-s.requestCh:
+			if r.Priority > 0 {
+				s.priReqQueue = append(s.priReqQueue, r)
+			} else {
 				s.reqQueue = append(s.reqQueue, req)
 			}
 			s.reqQueue = append(s.reqQueue, r)
 		case ch <- req:
+			req = nil
+			ch = nil
 		}
 	}
 }
