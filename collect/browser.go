@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/text/transform"
 
+	"github.com/donghc/crawler/extensions"
 	"github.com/donghc/crawler/proxy"
 )
 
@@ -36,7 +37,7 @@ func (fetch *BrowserFetch) Get(request *Request) ([]byte, error) {
 	if request.Task.Cookie != "" {
 		req.Header.Set("Cookie", request.Task.Cookie)
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36")
+	req.Header.Set("User-Agent", extensions.GenerateRandomUA())
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
