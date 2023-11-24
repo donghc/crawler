@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/donghc/crawler/engine"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/donghc/crawler/engine"
+
 	"go.uber.org/zap/zapcore"
 
 	"github.com/donghc/crawler/collect"
@@ -35,23 +35,11 @@ func doubanGroup() {
 	}
 
 	var seeds = make([]*collect.Task, 0, 1000)
-	//str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", 0)
-	//seeds = append(seeds, &collect.Task{
-	//	URL:      str,
-	//	WaitTime: 1 * time.Second,
-	//	MaxDepth: 5,
-	//	Fetcher:  f,
-	//	Cookie:   cookie,
-	//	RootReq: &collect.Request{
-	//		Method:    "GET",
-	//		ParseFunc: doubangroup.ParseURL,
-	//	},
-	//})
 	for i := 0; i <= 100; i += 25 {
-		str := fmt.Sprintf("https://www.douban.com/group/szsh/discussion?start=%d", i)
+		str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", i)
 		seeds = append(seeds, &collect.Task{
 			URL:      str,
-			WaitTime: 1 * time.Second,
+			WaitTime: 3 * time.Second,
 			MaxDepth: 5,
 			Fetcher:  f,
 			Cookie:   cookie,
@@ -80,28 +68,4 @@ func getProxy() (proxy.ProxyFunc, error) {
 	proxyURLs := []string{"http://127.0.0.1:8888", "http://127.0.0.1:8888"}
 	return proxy.RoundRobinProxySwitcher(proxyURLs...)
 
-}
-
-func test(workList []*collect.Request, f *collect.BrowserFetch) {
-
-	plugin := log.NewStdoutPlugin(zapcore.InfoLevel)
-	logger := log.NewLogger(plugin)
-
-	for len(workList) > 0 {
-		items := workList
-		workList = nil
-		for _, item := range items {
-			body, err := f.Get(item)
-			if err != nil {
-				logger.Error("read content failed ", zap.Error(err))
-				continue
-			}
-			res := item.ParseFunc(body, item)
-			for _, v := range res.Items {
-				logger.Info("result", zap.String("get url:", v.(string)))
-			}
-			time.Sleep(5 * time.Second)
-			workList = append(workList, res.Requests...)
-		}
-	}
 }

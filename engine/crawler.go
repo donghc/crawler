@@ -1,9 +1,11 @@
 package engine
 
 import (
-	"github.com/donghc/crawler/collect"
-	"go.uber.org/zap"
 	"sync"
+
+	"go.uber.org/zap"
+
+	"github.com/donghc/crawler/collect"
 )
 
 // Crawler 全局爬取实例
@@ -15,9 +17,9 @@ type Crawler struct {
 }
 
 type Scheduler interface {
-	Schedule()                //调度
-	Push(...*collect.Request) //将任务放到调度器中
-	Pull() *collect.Request   //获取任务
+	Schedule()                // 调度
+	Push(...*collect.Request) // 将任务放到调度器中
+	Pull() *collect.Request   // 获取任务
 }
 
 func NewEngine(opts ...Option) *Crawler {
@@ -59,7 +61,6 @@ func (c *Crawler) CreateWorker() {
 			continue
 		}
 		c.StoreVisited(r)
-		//c.Logger.Sugar().Info("begin get url ", r.URL)
 
 		body, err := r.Task.Fetcher.Get(r)
 		if err != nil {
