@@ -13,6 +13,8 @@ type Crawler struct {
 	out         chan collect.ParseResult
 	Visited     map[string]bool
 	VisitedLock sync.Mutex
+	failures    map[string]*collect.Request // 失败请求id -> 失败请求
+	failureLock sync.Mutex
 	options
 }
 
@@ -65,13 +67,12 @@ func (c *Crawler) CreateWorker() {
 		body, err := r.Task.Fetcher.Get(r)
 		if err != nil {
 			c.Logger.Error("can not fetch ", zap.Error(err))
+			c.SetFailure(r)
 			continue
 		}
 		if len(body) < 6000 {
-			c.Logger.Error("can not fetch ",
-				zap.Int("length :", len(body)),
-				zap.String("url :", r.URL),
-			)
+			c.Logger.Error("can not fetch ", zap.Int("length :", len(body)), zap.String("url :", r.URL))
+			c.SetFailure(r)
 			continue
 		}
 		result := r.ParseFunc(body, r)
@@ -124,4 +125,24 @@ func (c *Crawler) StoreVisited(reqs ...*collect.Request) {
 		unique := req.Unique()
 		c.Visited[unique] = true
 	}
+}
+
+func (c *Crawler) SetFailure(req *collect.Request) {
+	unique := req.Unique()
+	if !req.Task.Reload {
+		// 不可以重复爬取,需要在失败重试前删除 Visited 中的历史记录
+		c.VisitedLock.Lock()
+		delete(c.Visited, unique)
+		c.VisitedLock.Unlock()
+		return
+	}
+	c.failureLock.Lock()
+	defer c.failureLock.Unlock()
+
+	if _, ok := c.failures[unique]; !ok {
+		// 第一次失败，可以重试一次
+		c.failures[unique] = req
+		c.scheduler.Push(req)
+	}
+	// todo: 失败2次，加载到失败队列中
 }

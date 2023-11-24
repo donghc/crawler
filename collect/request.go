@@ -17,6 +17,7 @@ type Task struct {
 	Visited     map[string]bool
 	VisitedLock sync.Mutex
 	Fetcher     Fetcher
+	Reload      bool // 标识当前任务的网页是否可以重复爬取，如果不可以重复爬取，我们需要在失败重试前删除 Visited 中的历史记录。
 }
 
 type Request struct {
