@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"sync"
 	"time"
+
+	"github.com/donghc/crawler/parse"
 )
 
 // Task 爬虫任务
@@ -18,6 +20,9 @@ type Task struct {
 	VisitedLock sync.Mutex
 	Fetcher     Fetcher
 	Reload      bool // 标识当前任务的网页是否可以重复爬取，如果不可以重复爬取，我们需要在失败重试前删除 Visited 中的历史记录。
+
+	Name string         // 任务唯一标识
+	Rule parse.RuleTree //
 }
 
 type Request struct {

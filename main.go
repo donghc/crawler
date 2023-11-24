@@ -37,7 +37,8 @@ func doubanGroup() {
 	var seeds = make([]*collect.Task, 0, 1000)
 	for i := 0; i <= 100; i += 25 {
 		str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", i)
-		seeds = append(seeds, &collect.Task{
+		task := &collect.Task{
+			Name:     "获取豆瓣中带阳台的房间",
 			URL:      str,
 			WaitTime: 3 * time.Second,
 			MaxDepth: 5,
@@ -48,7 +49,8 @@ func doubanGroup() {
 				Method:    "GET",
 				ParseFunc: doubangroup.ParseURL,
 			},
-		})
+		}
+		seeds = append(seeds, task)
 	}
 
 	schedule := engine.NewEngine(
