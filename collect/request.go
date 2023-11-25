@@ -26,11 +26,12 @@ type Task struct {
 type Request struct {
 	unique   string // 唯一标识
 	RuleName string //规则名称
-	Task     *Task
 	URL      string // 表示要访问的网站
 	Method   string // 方法
 	Depth    int    // 当前深度
 	Priority int    // 优先级
+
+	Task *Task
 }
 
 type ParseResult struct {
