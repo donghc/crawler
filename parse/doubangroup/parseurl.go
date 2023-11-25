@@ -1,6 +1,7 @@
 package doubangroup
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -21,8 +22,8 @@ var DoubanGroupTask = &collect.Task{
 	Rule: collect.RuleTree{
 		Root: func() []*collect.Request {
 			var roots []*collect.Request
-			for i := 0; i < 25; i += 25 {
-				str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", i)
+			for i := 0; i < 200; i += 25 {
+				str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d&type=new", i)
 				roots = append(roots, &collect.Request{
 					Priority: 1,
 					URL:      str,
@@ -42,11 +43,17 @@ var DoubanGroupTask = &collect.Task{
 
 const cityListRe = `(https://www.douban.com/group/topic/[0-9a-z]+/)"[^>]*>([^<]+)</a>`
 
-func ParseURL(ctx *collect.RuleContext) collect.ParseResult {
-	re := regexp.MustCompile(cityListRe)
+func ParseURL(ctx *collect.RuleContext) (collect.ParseResult, error) {
+	r2 := regexp.MustCompile("禁止访问")
+	ok := r2.MatchString(string(ctx.Body))
+	if ok {
+		fmt.Println("被检测到为爬虫行为，需要人机验证")
+		return collect.ParseResult{}, errors.New("被检测到为爬虫行为，需要人机验证")
+	}
 
-	matches := re.FindAllSubmatch(ctx.Body, -1)
+	re := regexp.MustCompile(cityListRe)
 	result := collect.ParseResult{}
+	matches := re.FindAllSubmatch(ctx.Body, -1)
 
 	for _, m := range matches {
 		u := string(m[1])
@@ -58,12 +65,12 @@ func ParseURL(ctx *collect.RuleContext) collect.ParseResult {
 			RuleName: "解析阳台房",
 		})
 	}
-	return result
+	return result, nil
 }
 
 const ContentRe = `<div\s+class="topic-content">(?s:.)*?</div>`
 
-func GetSunRoom(ctx *collect.RuleContext) collect.ParseResult {
+func GetSunRoom(ctx *collect.RuleContext) (collect.ParseResult, error) {
 	re := regexp.MustCompile(ContentRe)
 	resultStr := re.FindString(string(ctx.Body))
 
@@ -73,12 +80,12 @@ func GetSunRoom(ctx *collect.RuleContext) collect.ParseResult {
 	if !ok {
 		return collect.ParseResult{
 			Items: []interface{}{},
-		}
+		}, nil
 	}
 
 	result := collect.ParseResult{
 		Items: []interface{}{ctx.Req.URL},
 	}
 
-	return result
+	return result, nil
 }

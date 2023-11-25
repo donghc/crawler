@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/donghc/crawler/parse/doubangroup"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -63,10 +64,10 @@ func NewEngine(opts ...Option) *Crawler {
 }
 
 func (c *Crawler) Run() {
-	go c.Schedule()
 	for i := 0; i < c.WorkCount; i++ {
 		go c.CreateWorker()
 	}
+	go c.Schedule()
 
 	c.HandleResult()
 }
@@ -74,6 +75,7 @@ func (c *Crawler) Run() {
 // CreateWorker 创建 worker
 func (c *Crawler) CreateWorker() {
 	for {
+		time.Sleep(5 * time.Second)
 		r := c.scheduler.Pull()
 		if r.CheckDepth() {
 			c.Logger.Sugar().Warn("current depth 超过最大限制")
@@ -97,8 +99,9 @@ func (c *Crawler) CreateWorker() {
 			continue
 		}
 		//获取当前任务对应的规则
+		//c.Logger.Sugar().Info("规则名称为:", r.RuleName)
 		rule := r.Task.Rule.Trunk[r.RuleName]
-		result := rule.ParseFunc(&collect.RuleContext{
+		result, _ := rule.ParseFunc(&collect.RuleContext{
 			Body: body,
 			Req:  r,
 		})
@@ -113,7 +116,11 @@ func (c *Crawler) CreateWorker() {
 func (c *Crawler) Schedule() {
 	var reqs []*collect.Request
 	for _, seed := range c.Seeds {
-		task := Store.hash[seed.Name]
+		task, ok := Store.hash[seed.Name]
+		if !ok {
+			c.Logger.Sugar().Error("未知的任务名称", seed.Name)
+			continue
+		}
 		task.Fetcher = seed.Fetcher
 		rootReqs := task.Rule.Root()
 		for _, req := range rootReqs {

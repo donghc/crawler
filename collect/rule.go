@@ -11,7 +11,7 @@ type RuleTree struct {
 
 // Rule 采集规则节点
 type Rule struct {
-	ParseFunc func(ctx *RuleContext) ParseResult // 内容解析函数
+	ParseFunc func(ctx *RuleContext) (ParseResult, error) // 内容解析函数
 }
 
 // RuleContext 为自定义结构体，用于传递上下文信息，也就是当前的请求参数以及要解析的内容字节数组。
