@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/donghc/crawler/parse/doubangroup"
 	"sync"
 
 	"go.uber.org/zap"
@@ -8,13 +9,34 @@ import (
 	"github.com/donghc/crawler/collect"
 )
 
+func init() {
+	Store.Add(doubangroup.DoubanGroupTask)
+}
+
+var Store = &CrawlerStore{
+	list: []*collect.Task{},
+	hash: map[string]*collect.Task{},
+}
+
+type CrawlerStore struct {
+	list []*collect.Task
+	hash map[string]*collect.Task
+}
+
+func (s *CrawlerStore) Add(task *collect.Task) {
+	s.hash[task.Name] = task
+	s.list = append(s.list, task)
+}
+
 // Crawler 全局爬取实例
 type Crawler struct {
 	out         chan collect.ParseResult
 	Visited     map[string]bool
 	VisitedLock sync.Mutex
+
 	failures    map[string]*collect.Request // 失败请求id -> 失败请求
 	failureLock sync.Mutex
+
 	options
 }
 
@@ -41,11 +63,10 @@ func NewEngine(opts ...Option) *Crawler {
 }
 
 func (c *Crawler) Run() {
+	go c.Schedule()
 	for i := 0; i < c.WorkCount; i++ {
 		go c.CreateWorker()
 	}
-
-	go c.Schedule()
 
 	c.HandleResult()
 }
@@ -75,7 +96,12 @@ func (c *Crawler) CreateWorker() {
 			c.SetFailure(r)
 			continue
 		}
-		result := r.ParseFunc(body, r)
+		//获取当前任务对应的规则
+		rule := r.Task.Rule.Trunk[r.RuleName]
+		result := rule.ParseFunc(&collect.RuleContext{
+			Body: body,
+			Req:  r,
+		})
 
 		if len(result.Requests) > 0 {
 			go c.scheduler.Push(result.Requests...)
@@ -87,9 +113,13 @@ func (c *Crawler) CreateWorker() {
 func (c *Crawler) Schedule() {
 	var reqs []*collect.Request
 	for _, seed := range c.Seeds {
-		seed.RootReq.Task = seed
-		seed.RootReq.URL = seed.URL
-		reqs = append(reqs, seed.RootReq)
+		task := Store.hash[seed.Name]
+		task.Fetcher = seed.Fetcher
+		rootReqs := task.Rule.Root()
+		for _, req := range rootReqs {
+			req.Task = task
+		}
+		reqs = append(reqs, rootReqs...)
 	}
 	go c.scheduler.Schedule()
 	go c.scheduler.Push(reqs...)

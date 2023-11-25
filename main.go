@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/donghc/crawler/engine"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/donghc/crawler/collect"
 	"github.com/donghc/crawler/log"
-	"github.com/donghc/crawler/parse/doubangroup"
 	"github.com/donghc/crawler/proxy"
 )
 
@@ -35,23 +33,11 @@ func doubanGroup() {
 	}
 
 	var seeds = make([]*collect.Task, 0, 1000)
-	for i := 0; i <= 100; i += 25 {
-		str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d", i)
-		task := &collect.Task{
-			Name:     "获取豆瓣中带阳台的房间",
-			URL:      str,
-			WaitTime: 3 * time.Second,
-			MaxDepth: 5,
-			Fetcher:  f,
-			Cookie:   cookie,
-			RootReq: &collect.Request{
-				Priority:  1,
-				Method:    "GET",
-				ParseFunc: doubangroup.ParseURL,
-			},
-		}
-		seeds = append(seeds, task)
-	}
+	seeds = append(seeds, &collect.Task{
+		Name:    "find_douban_sun_room",
+		Fetcher: f,
+	},
+	)
 
 	schedule := engine.NewEngine(
 		engine.WithFetcher(f),

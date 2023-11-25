@@ -24,13 +24,13 @@ type Task struct {
 }
 
 type Request struct {
-	unique    string // 唯一标识
-	Task      *Task
-	URL       string                             // 表示要访问的网站
-	Method    string                             // 方法
-	Depth     int                                // 当前深度
-	Priority  int                                // 优先级
-	ParseFunc func([]byte, *Request) ParseResult // ParseFunc 函数会解析从网站获取到的网站信息，并返回 Requests 数组用于进一步获取数据。而 Items 表示获取到的数据。
+	unique   string // 唯一标识
+	RuleName string //规则名称
+	Task     *Task
+	URL      string // 表示要访问的网站
+	Method   string // 方法
+	Depth    int    // 当前深度
+	Priority int    // 优先级
 }
 
 type ParseResult struct {
