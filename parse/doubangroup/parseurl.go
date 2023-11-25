@@ -61,27 +61,6 @@ func ParseURL(ctx *collect.RuleContext) collect.ParseResult {
 	return result
 }
 
-// #link-report > div
-// /html/body/div[3]/div[1]/div/div[1]/div[2]/div[2]/div[1]/div
-//const ContentRe = `<div class="rich-content topic-richtext">[\s\S]*?阳台[\s\S]*?</div>`
-
-//const ContentRe = `<div class="topic-content">[\s\S]*?阳台[\s\S]*?<div class="aside">`
-//
-//func GetSunRoom(ctx *collect.RuleContext) collect.ParseResult {
-//	re := regexp.MustCompile(ContentRe)
-//
-//	ok := re.Match(ctx.Body)
-//	if !ok {
-//		return collect.ParseResult{
-//			Items: []interface{}{},
-//		}
-//	}
-//	result := collect.ParseResult{
-//		Items: []interface{}{ctx.Req.URL},
-//	}
-//	return result
-//}
-
 const ContentRe = `<div\s+class="topic-content">(?s:.)*?</div>`
 
 func GetSunRoom(ctx *collect.RuleContext) collect.ParseResult {
