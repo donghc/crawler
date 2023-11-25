@@ -2,27 +2,17 @@ package main
 
 import (
 	"fmt"
-	"regexp"
+	"github.com/robertkrimen/otto"
 )
 
 func main() {
-	html := `
-        <div class="topic-content">
-          这套房子有
-        </div>
-        
-        <div>
-          其它内容阳台
-        </div>
-    `
-
-	r := regexp.MustCompile(`<div\s+class="topic-content">(?s:.)*?</div>`)
-	result := r.FindString(html)
-
-	r2 := regexp.MustCompile("阳台")
-	if r2.MatchString(result) {
-		fmt.Println("包含阳台")
-	} else {
-		fmt.Println("不包含阳台")
-	}
+	vm := otto.New()
+	script := `
+    var n = 100
+    console.log("hello-" + n)
+    n = n-10;
+    n-10
+  `
+	value, _ := vm.Run(script)
+	fmt.Println("value:", value.String())
 }
