@@ -1,8 +1,9 @@
-package collect
+package impl
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/donghc/crawler/collect"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -18,7 +19,7 @@ type BrowserFetch struct {
 	Proxy   proxy.ProxyFunc
 }
 
-func (fetch *BrowserFetch) Get(request *Request) ([]byte, error) {
+func (fetch *BrowserFetch) Get(request *collect.Request) ([]byte, error) {
 	client := &http.Client{
 		Timeout: fetch.Timeout,
 	}
@@ -43,7 +44,7 @@ func (fetch *BrowserFetch) Get(request *Request) ([]byte, error) {
 		return nil, err
 	}
 	bodyReader := bufio.NewReader(resp.Body)
-	e := DetermineEncoding(bodyReader)
+	e := collect.DetermineEncoding(bodyReader)
 	utf8Reader := transform.NewReader(bodyReader, e.NewDecoder())
 	return ioutil.ReadAll(utf8Reader)
 }

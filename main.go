@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/donghc/crawler/collect/impl"
 	"time"
 
 	"github.com/donghc/crawler/engine"
@@ -27,14 +28,16 @@ func doubanGroup() {
 	logger.Info("log init end ,begin start crawler task")
 
 	p, _ := getProxy()
-	f := &collect.BrowserFetch{
+	f := &impl.BrowserFetch{
 		Timeout: 3 * time.Second,
 		Proxy:   p,
 	}
 
 	var seeds = make([]*collect.Task, 0, 1000)
 	seeds = append(seeds, &collect.Task{
-		Name:    "find_douban_sun_room",
+		Property: collect.Property{
+			Name: "js_find_douban_sun_room",
+		},
 		Fetcher: f,
 	},
 	)

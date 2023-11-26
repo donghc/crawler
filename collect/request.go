@@ -7,19 +7,24 @@ import (
 	"time"
 )
 
+type Property struct {
+	Name     string        `json:"name,omitempty"` // 任务名称，需要保证唯一
+	URL      string        `json:"url,omitempty"`  // URL地址
+	Cookie   string        `json:"cookie"`         // cookie
+	WaitTime time.Duration `json:"wait_time"`      // 等待时间
+	Reload   bool          `json:"reload"`         // 是否可以重复爬取
+	MaxDepth int64         `json:"max_depth"`      //最大深度
+}
+
 // Task 爬虫任务
 type Task struct {
-	URL         string        // 表示要访问的网站
-	Cookie      string        // cookie
-	WaitTime    time.Duration // 默认等待时间
-	MaxDepth    int           // 最大深度
-	RootReq     *Request      // 任务中的第一请求
+	Property
+
+	RootReq     *Request // 任务中的第一请求
 	Visited     map[string]bool
 	VisitedLock sync.Mutex
 	Fetcher     Fetcher
-	Reload      bool // 标识当前任务的网页是否可以重复爬取，如果不可以重复爬取，我们需要在失败重试前删除 Visited 中的历史记录。
 
-	Name string   // 任务唯一标识
 	Rule RuleTree //
 }
 
@@ -28,7 +33,7 @@ type Request struct {
 	RuleName string //规则名称
 	URL      string // 表示要访问的网站
 	Method   string // 方法
-	Depth    int    // 当前深度
+	Depth    int64  // 当前深度
 	Priority int    // 优先级
 
 	Task *Task

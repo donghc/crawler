@@ -1,8 +1,9 @@
-package collect
+package impl
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/donghc/crawler/collect"
 	"io/ioutil"
 	"net/http"
 
@@ -12,7 +13,7 @@ import (
 type SimpleFetch struct {
 }
 
-func (fetch *SimpleFetch) Get(req *Request) ([]byte, error) {
+func (fetch *SimpleFetch) Get(req *collect.Request) ([]byte, error) {
 	resp, err := http.Get(req.URL)
 	if err != nil {
 		panic(err)
@@ -25,7 +26,7 @@ func (fetch *SimpleFetch) Get(req *Request) ([]byte, error) {
 	}
 
 	bodyReader := bufio.NewReader(resp.Body)
-	e := DetermineEncoding(bodyReader)
+	e := collect.DetermineEncoding(bodyReader)
 	utf8Reader := transform.NewReader(bodyReader, e.NewDecoder())
 
 	return ioutil.ReadAll(utf8Reader)

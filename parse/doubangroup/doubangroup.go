@@ -15,12 +15,14 @@ var (
 )
 
 var DoubanGroupTask = &collect.Task{
-	Name:     "find_douban_sun_room",
-	WaitTime: 3 * time.Second,
-	MaxDepth: 5,
-	Cookie:   cookie,
+	Property: collect.Property{
+		Name:     "find_douban_sun_room",
+		Cookie:   cookie,
+		WaitTime: 3 * time.Second,
+		MaxDepth: 5,
+	},
 	Rule: collect.RuleTree{
-		Root: func() []*collect.Request {
+		Root: func() ([]*collect.Request, error) {
 			var roots []*collect.Request
 			for i := 0; i < 200; i += 25 {
 				str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d&type=new", i)
@@ -32,7 +34,7 @@ var DoubanGroupTask = &collect.Task{
 				},
 				)
 			}
-			return roots
+			return roots, nil
 		},
 		Trunk: map[string]*collect.Rule{
 			"解析网站URL": &collect.Rule{ParseFunc: ParseURL},

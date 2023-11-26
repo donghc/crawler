@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/donghc/crawler/parse/doubangroup"
+	"github.com/robertkrimen/otto"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 
 func init() {
 	Store.Add(doubangroup.DoubanGroupTask)
+	Store.AddJsTask(doubangroup.DouBanGroupJSTask)
 }
 
 var Store = &CrawlerStore{
@@ -27,6 +29,57 @@ type CrawlerStore struct {
 func (s *CrawlerStore) Add(task *collect.Task) {
 	s.hash[task.Name] = task
 	s.list = append(s.list, task)
+}
+
+func (s *CrawlerStore) AddJsTask(jsTask *collect.TaskModel) {
+	task := &collect.Task{Property: jsTask.Property}
+	task.Rule.Root = func() ([]*collect.Request, error) {
+		vm := otto.New()
+		vm.Set("AddJsReqs", AddJsReqs)
+		v, _ := vm.Eval(jsTask.Root)
+		export, _ := v.Export()
+		return export.([]*collect.Request), nil
+	}
+
+	for _, r := range jsTask.Rules {
+
+		parseFunc := func(parse string) func(ctx *collect.RuleContext) (collect.ParseResult, error) {
+			return func(ctx *collect.RuleContext) (collect.ParseResult, error) {
+				vm := otto.New()
+				vm.Set("ctx", ctx)
+				v, err := vm.Eval(parse)
+				export, err := v.Export()
+				return export.(collect.ParseResult), err
+			}
+		}(r.ParseFunc)
+		if task.Rule.Trunk == nil {
+			task.Rule.Trunk = make(map[string]*collect.Rule, 0)
+		}
+		task.Rule.Trunk[r.Name] = &collect.Rule{ParseFunc: parseFunc}
+	}
+
+	s.hash[task.Name] = task
+	s.list = append(s.list, task)
+
+}
+
+func AddJsReqs(jsReqs []map[string]interface{}) []*collect.Request {
+	reqs := make([]*collect.Request, 0)
+
+	for _, jreq := range jsReqs {
+		req := &collect.Request{}
+		url, ok := jreq["URL"].(string)
+		if !ok {
+			return nil
+		}
+		req.URL = url
+		req.RuleName = jreq["RuleName"].(string)
+		req.Method = jreq["Method"].(string)
+		req.Priority = jreq["Priority"].(int)
+		reqs = append(reqs, req)
+	}
+
+	return reqs
 }
 
 // Crawler 全局爬取实例
@@ -122,7 +175,7 @@ func (c *Crawler) Schedule() {
 			continue
 		}
 		task.Fetcher = seed.Fetcher
-		rootReqs := task.Rule.Root()
+		rootReqs, _ := task.Rule.Root()
 		for _, req := range rootReqs {
 			req.Task = task
 		}

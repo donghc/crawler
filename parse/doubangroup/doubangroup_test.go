@@ -16,14 +16,14 @@ var (
 
 func TestGetContent(t *testing.T) {
 
-	content := GetSunRoom(&collect.RuleContext{
+	content, _ := GetSunRoom(&collect.RuleContext{
 		Body: s1,
 		Req:  nil,
 	})
 
 	fmt.Println(content.Items)
 
-	content2 := GetSunRoom(&collect.RuleContext{
+	content2, _ := GetSunRoom(&collect.RuleContext{
 		Body: s2,
 		Req:  nil,
 	})
