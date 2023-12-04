@@ -24,7 +24,7 @@ var DoubanGroupTask = &collect.Task{
 	Rule: collect.RuleTree{
 		Root: func() ([]*collect.Request, error) {
 			var roots []*collect.Request
-			for i := 0; i < 200; i += 25 {
+			for i := 0; i < 25; i += 25 {
 				str := fmt.Sprintf("https://www.douban.com/group/beijingzufang/discussion?start=%d&type=new", i)
 				roots = append(roots, &collect.Request{
 					Priority: 1,

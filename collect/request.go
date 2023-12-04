@@ -13,7 +13,7 @@ type Property struct {
 	Cookie   string        `json:"cookie"`         // cookie
 	WaitTime time.Duration `json:"wait_time"`      // 等待时间
 	Reload   bool          `json:"reload"`         // 是否可以重复爬取
-	MaxDepth int64         `json:"max_depth"`      //最大深度
+	MaxDepth int64         `json:"max_depth"`      // 最大深度
 }
 
 // Task 爬虫任务
@@ -30,11 +30,11 @@ type Task struct {
 
 type Request struct {
 	unique   string // 唯一标识
-	RuleName string //规则名称
+	RuleName string // 规则名称
 	URL      string // 表示要访问的网站
 	Method   string // 方法
 	Depth    int64  // 当前深度
-	Priority int    // 优先级
+	Priority int64  // 优先级
 
 	Task *Task
 }

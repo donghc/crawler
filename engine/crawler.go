@@ -1,10 +1,12 @@
 package engine
 
 import (
-	"github.com/donghc/crawler/parse/doubangroup"
-	"github.com/robertkrimen/otto"
 	"sync"
 	"time"
+
+	"github.com/robertkrimen/otto"
+
+	"github.com/donghc/crawler/parse/doubangroup"
 
 	"go.uber.org/zap"
 
@@ -31,29 +33,43 @@ func (s *CrawlerStore) Add(task *collect.Task) {
 	s.list = append(s.list, task)
 }
 
-func (s *CrawlerStore) AddJsTask(jsTask *collect.TaskModel) {
-	task := &collect.Task{Property: jsTask.Property}
+func (s *CrawlerStore) AddJsTask(m *collect.TaskModel) {
+	task := &collect.Task{Property: m.Property}
 	task.Rule.Root = func() ([]*collect.Request, error) {
 		vm := otto.New()
-		vm.Set("AddJsReqs", AddJsReqs)
-		v, _ := vm.Eval(jsTask.Root)
-		export, _ := v.Export()
-		return export.([]*collect.Request), nil
+		vm.Set("AddJsReq", AddJsReqs)
+		v, err := vm.Eval(m.Root)
+		if err != nil {
+			return nil, err
+		}
+		e, err := v.Export()
+		if err != nil {
+			return nil, err
+		}
+		return e.([]*collect.Request), nil
 	}
 
-	for _, r := range jsTask.Rules {
-
+	for _, r := range m.Rules {
 		parseFunc := func(parse string) func(ctx *collect.RuleContext) (collect.ParseResult, error) {
 			return func(ctx *collect.RuleContext) (collect.ParseResult, error) {
 				vm := otto.New()
 				vm.Set("ctx", ctx)
 				v, err := vm.Eval(parse)
-				export, err := v.Export()
-				return export.(collect.ParseResult), err
+				if err != nil {
+					return collect.ParseResult{}, err
+				}
+				e, err := v.Export()
+				if err != nil {
+					return collect.ParseResult{}, err
+				}
+				if e == nil {
+					return collect.ParseResult{}, err
+				}
+				return e.(collect.ParseResult), err
 			}
 		}(r.ParseFunc)
 		if task.Rule.Trunk == nil {
-			task.Rule.Trunk = make(map[string]*collect.Rule, 0)
+			task.Rule.Trunk = make(map[string]*collect.Rule)
 		}
 		task.Rule.Trunk[r.Name] = &collect.Rule{ParseFunc: parseFunc}
 	}
@@ -75,7 +91,7 @@ func AddJsReqs(jsReqs []map[string]interface{}) []*collect.Request {
 		req.URL = url
 		req.RuleName = jreq["RuleName"].(string)
 		req.Method = jreq["Method"].(string)
-		req.Priority = jreq["Priority"].(int)
+		req.Priority = jreq["Priority"].(int64)
 		reqs = append(reqs, req)
 	}
 
@@ -140,6 +156,7 @@ func (c *Crawler) CreateWorker() {
 		}
 		c.StoreVisited(r)
 
+		c.Logger.Sugar().Info("", r.URL)
 		body, err := r.Task.Fetcher.Get(r)
 		if err != nil {
 			c.Logger.Error("can not fetch ", zap.Error(err))
@@ -151,8 +168,8 @@ func (c *Crawler) CreateWorker() {
 			c.SetFailure(r)
 			continue
 		}
-		//获取当前任务对应的规则
-		//c.Logger.Sugar().Info("规则名称为:", r.RuleName)
+		// 获取当前任务对应的规则
+		// c.Logger.Sugar().Info("规则名称为:", r.RuleName)
 		rule := r.Task.Rule.Trunk[r.RuleName]
 		result, _ := rule.ParseFunc(&collect.RuleContext{
 			Body: body,

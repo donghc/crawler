@@ -3,14 +3,15 @@ package impl
 import (
 	"bufio"
 	"fmt"
-	"github.com/donghc/crawler/collect"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	"github.com/donghc/crawler/collect"
+	"github.com/donghc/crawler/extensions"
+
 	"golang.org/x/text/transform"
 
-	"github.com/donghc/crawler/extensions"
 	"github.com/donghc/crawler/proxy"
 )
 

@@ -1,8 +1,9 @@
 package doubangroup
 
 import (
-	"github.com/donghc/crawler/collect"
 	"time"
+
+	"github.com/donghc/crawler/collect"
 )
 
 var DouBanGroupJSTask = &collect.TaskModel{
@@ -15,7 +16,7 @@ var DouBanGroupJSTask = &collect.TaskModel{
 	},
 	Root: `
 	var arr = new Array();
-	for (var i =0;i<=200;i+=25){
+	for (var i =0;i<=25;i+=25){
 		var obj = { 
 			URL: "https://www.douban.com/group/beijingzufang/discussion?start=" + i, 
 			Priority: 1, 
@@ -37,7 +38,6 @@ var DouBanGroupJSTask = &collect.TaskModel{
 		{
 			Name: "解析阳台房",
 			ParseFunc: `
-			//console.log("parse output");
 			ctx.OutputJS("<div class=\"topic-content\">[\\s\\S]*?阳台[\\s\\S]*?<div class=\"aside\">");
 			`,
 		},
