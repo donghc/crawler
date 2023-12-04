@@ -62,7 +62,7 @@ func (c *RuleContext) ParseJSReg(name string, reg string) ParseResult {
 	return result
 }
 
-func (c *RuleContext) OutputJS(reg string) (ParseResult, error) {
+func (c *RuleContext) OutputJS(reg string) ParseResult {
 	re := regexp.MustCompile(reg)
 	resultStr := re.FindString(string(c.Body))
 
@@ -71,14 +71,14 @@ func (c *RuleContext) OutputJS(reg string) (ParseResult, error) {
 	if !ok {
 		return ParseResult{
 			Items: []interface{}{},
-		}, nil
+		}
 	}
 
 	result := ParseResult{
 		Items: []interface{}{c.Req.URL},
 	}
 
-	return result, nil
+	return result
 }
 
 type Request struct {
