@@ -3,6 +3,9 @@ package collect
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"net/http"
+	"regexp"
 	"sync"
 	"time"
 )
@@ -26,6 +29,56 @@ type Task struct {
 	Fetcher     Fetcher
 
 	Rule RuleTree //
+}
+
+// RuleContext 为自定义结构体，用于传递上下文信息，也就是当前的请求参数以及要解析的内容字节数组。
+type RuleContext struct {
+	Body []byte
+	Req  *Request
+}
+
+func (c *RuleContext) ParseJSReg(name string, reg string) ParseResult {
+	r2 := regexp.MustCompile("禁止访问")
+	ok := r2.MatchString(string(c.Body))
+	if ok {
+		fmt.Println("被检测到为爬虫行为，需要人机验证")
+		return ParseResult{}
+	}
+
+	re := regexp.MustCompile(reg)
+	matches := re.FindAllSubmatch(c.Body, -1)
+	result := ParseResult{}
+
+	for _, m := range matches {
+		u := string(m[1])
+		result.Requests = append(result.Requests, &Request{
+			Method:   http.MethodGet,
+			Task:     c.Req.Task,
+			URL:      u,
+			Depth:    c.Req.Depth + 1,
+			RuleName: name,
+		})
+	}
+	return result
+}
+
+func (c *RuleContext) OutputJS(reg string) (ParseResult, error) {
+	re := regexp.MustCompile(reg)
+	resultStr := re.FindString(string(c.Body))
+
+	r2 := regexp.MustCompile("阳台")
+	ok := r2.MatchString(resultStr)
+	if !ok {
+		return ParseResult{
+			Items: []interface{}{},
+		}, nil
+	}
+
+	result := ParseResult{
+		Items: []interface{}{c.Req.URL},
+	}
+
+	return result, nil
 }
 
 type Request struct {

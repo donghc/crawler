@@ -6,28 +6,26 @@ import (
 	"github.com/donghc/crawler/collect"
 )
 
-var DouBanGroupJSTask = &collect.TaskModel{
+var DoubangroupJSTask = &collect.TaskModel{
 	Property: collect.Property{
 		Name:     "js_find_douban_sun_room",
-		Cookie:   cookie,
-		WaitTime: 5 * time.Second,
-		Reload:   false,
+		WaitTime: 1 * time.Second,
 		MaxDepth: 5,
+		Cookie:   cookie,
 	},
 	Root: `
-	var arr = new Array();
-	for (var i =0;i<=25;i+=25){
-		var obj = { 
-			URL: "https://www.douban.com/group/beijingzufang/discussion?start=" + i, 
-			Priority: 1, 
-			RuleName: "解析网站URL", 
-			Method: "GET", 
-		}; 
-		arr.push(obj); 
-	}; 
-	console.log(arr[0].URL); 
-	AddJsReq(arr);
-`,
+		var arr = new Array();
+ 		for (var i = 0; i <= 50; i+=25) {
+			var obj = {
+               URL: "https://www.douban.com/group/beijingzufang/discussion?start=" + i, 
+			   Priority: 1,
+			   RuleName: "解析网站URL",
+			   Method: "GET",
+		   };
+		   arr.push(obj);
+		};
+		AddJsReq(arr);
+			`,
 	Rules: []collect.RuleModel{
 		{
 			Name: "解析网站URL",

@@ -15,7 +15,7 @@ import (
 
 func init() {
 	Store.Add(doubangroup.DoubanGroupTask)
-	Store.AddJsTask(doubangroup.DouBanGroupJSTask)
+	Store.AddJsTask(doubangroup.DoubangroupJSTask)
 }
 
 var Store = &CrawlerStore{
@@ -79,22 +79,21 @@ func (s *CrawlerStore) AddJsTask(m *collect.TaskModel) {
 
 }
 
-func AddJsReqs(jsReqs []map[string]interface{}) []*collect.Request {
+// AddJsReqs 用于动态规则添加请求。
+func AddJsReqs(jreqs []map[string]interface{}) []*collect.Request {
 	reqs := make([]*collect.Request, 0)
-
-	for _, jreq := range jsReqs {
+	for _, jreq := range jreqs {
 		req := &collect.Request{}
-		url, ok := jreq["URL"].(string)
+		u, ok := jreq["URL"].(string)
 		if !ok {
 			return nil
 		}
-		req.URL = url
-		req.RuleName = jreq["RuleName"].(string)
-		req.Method = jreq["Method"].(string)
-		req.Priority = jreq["Priority"].(int64)
+		req.URL = u
+		req.RuleName, _ = jreq["RuleName"].(string)
+		req.Method, _ = jreq["Method"].(string)
+		req.Priority, _ = jreq["Priority"].(int64)
 		reqs = append(reqs, req)
 	}
-
 	return reqs
 }
 
@@ -123,7 +122,6 @@ func NewEngine(opts ...Option) *Crawler {
 	}
 	c := &Crawler{}
 	c.Visited = make(map[string]bool, 100)
-
 	out := make(chan collect.ParseResult)
 	c.out = out
 	c.options = option
@@ -133,10 +131,10 @@ func NewEngine(opts ...Option) *Crawler {
 }
 
 func (c *Crawler) Run() {
+	go c.Schedule()
 	for i := 0; i < c.WorkCount; i++ {
 		go c.CreateWorker()
 	}
-	go c.Schedule()
 
 	c.HandleResult()
 }

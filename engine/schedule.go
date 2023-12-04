@@ -32,6 +32,10 @@ func (s *Schedule) Pull() *collect.Request {
 	r := <-s.workerCh
 	return r
 }
+func (s *Schedule) Output() *collect.Request {
+	r := <-s.workerCh
+	return r
+}
 
 func (s *Schedule) Schedule() {
 	var req *collect.Request
@@ -55,36 +59,6 @@ func (s *Schedule) Schedule() {
 			} else {
 				s.reqQueue = append(s.reqQueue, r)
 			}
-		case ch <- req:
-			req = nil
-			ch = nil
-		}
-	}
-}
-func (s *Schedule) Schedule1() {
-	var req *collect.Request
-	var ch chan *collect.Request
-	for {
-		// 如果任务队列 reqQueue 大于 0，意味着有爬虫任务，这时我们获取队列中第一个任务，并将其剔除出队列
-		if req == nil && len(s.priReqQueue) > 0 {
-			req = s.priReqQueue[0]
-			s.priReqQueue = s.priReqQueue[1:]
-			ch = s.workerCh
-		}
-		if req == nil && len(s.reqQueue) > 0 {
-			req = s.reqQueue[0]
-			s.reqQueue = s.reqQueue[1:]
-			ch = s.workerCh
-		}
-
-		select {
-		case r := <-s.requestCh:
-			if r.Priority > 0 {
-				s.priReqQueue = append(s.priReqQueue, r)
-			} else {
-				s.reqQueue = append(s.reqQueue, req)
-			}
-			s.reqQueue = append(s.reqQueue, r)
 		case ch <- req:
 			req = nil
 			ch = nil
