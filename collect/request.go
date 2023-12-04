@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/donghc/crawler/collector"
 	"net/http"
 	"regexp"
 	"sync"
@@ -81,6 +82,17 @@ func (c *RuleContext) OutputJS(reg string) ParseResult {
 	return result
 }
 
+func (c *RuleContext) Output(data interface{}) *collector.OutputData {
+	res := &collector.OutputData{}
+	res.Data = make(map[string]interface{})
+	res.Data["Rule"] = c.Req.RuleName
+	res.Data["Data"] = data
+	res.Data["Url"] = c.Req.URL
+	res.Data["Time"] = time.Now().Format("2006-01-02 15:04:05")
+
+	return res
+}
+
 type Request struct {
 	unique   string // 唯一标识
 	RuleName string // 规则名称
@@ -90,6 +102,8 @@ type Request struct {
 	Priority int64  // 优先级
 
 	Task *Task
+
+	TmpData *Temp
 }
 
 type ParseResult struct {

@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"github.com/donghc/crawler/parse/doubanbook"
+	"github.com/donghc/crawler/parse/doubangroupjs"
 	"sync"
 	"time"
 
@@ -15,7 +17,8 @@ import (
 
 func init() {
 	Store.Add(doubangroup.DoubanGroupTask)
-	Store.AddJsTask(doubangroup.DoubangroupJSTask)
+	Store.Add(doubanbook.DoubanBookTask)
+	Store.AddJsTask(doubangroupjs.DoubangroupJSTask)
 }
 
 var Store = &CrawlerStore{

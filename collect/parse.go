@@ -11,5 +11,6 @@ type RuleTree struct {
 
 // Rule 采集规则节点
 type Rule struct {
-	ParseFunc func(ctx *RuleContext) (ParseResult, error) // 内容解析函数
+	ItemFields []string                                    //表明当前输出数据的字段名
+	ParseFunc  func(ctx *RuleContext) (ParseResult, error) // 内容解析函数
 }
