@@ -1,10 +1,13 @@
 package engine
 
 import (
-	"github.com/donghc/crawler/parse/doubanbook"
-	"github.com/donghc/crawler/parse/doubangroupjs"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/donghc/crawler/parse/doubanbook"
+	"github.com/donghc/crawler/parse/doubangroupjs"
+	"github.com/donghc/crawler/storage"
 
 	"github.com/robertkrimen/otto"
 
@@ -23,16 +26,20 @@ func init() {
 
 var Store = &CrawlerStore{
 	list: []*collect.Task{},
-	hash: map[string]*collect.Task{},
+	Hash: map[string]*collect.Task{},
+}
+
+func GetFields(taskName, ruleName string) []string {
+	return Store.Hash[taskName].Rule.Trunk[ruleName].ItemFields
 }
 
 type CrawlerStore struct {
 	list []*collect.Task
-	hash map[string]*collect.Task
+	Hash map[string]*collect.Task
 }
 
 func (s *CrawlerStore) Add(task *collect.Task) {
-	s.hash[task.Name] = task
+	s.Hash[task.Name] = task
 	s.list = append(s.list, task)
 }
 
@@ -77,7 +84,7 @@ func (s *CrawlerStore) AddJsTask(m *collect.TaskModel) {
 		task.Rule.Trunk[r.Name] = &collect.Rule{ParseFunc: parseFunc}
 	}
 
-	s.hash[task.Name] = task
+	s.Hash[task.Name] = task
 	s.list = append(s.list, task)
 
 }
@@ -164,6 +171,10 @@ func (c *Crawler) CreateWorker() {
 			c.SetFailure(r)
 			continue
 		}
+		if strings.Contains(string(body), "禁止访问") {
+			c.Logger.Error("禁止访问 ", zap.Int("length :", len(body)), zap.String("url :", r.URL))
+			continue
+		}
 		if len(body) < 6000 {
 			c.Logger.Error("can not fetch ", zap.Int("length :", len(body)), zap.String("url :", r.URL))
 			c.SetFailure(r)
@@ -187,12 +198,15 @@ func (c *Crawler) CreateWorker() {
 func (c *Crawler) Schedule() {
 	var reqs []*collect.Request
 	for _, seed := range c.Seeds {
-		task, ok := Store.hash[seed.Name]
+		task, ok := Store.Hash[seed.Name]
 		if !ok {
 			c.Logger.Sugar().Error("未知的任务名称", seed.Name)
 			continue
 		}
 		task.Fetcher = seed.Fetcher
+		task.Storage = seed.Storage
+		task.Logger = c.Logger
+
 		rootReqs, _ := task.Rule.Root()
 		for _, req := range rootReqs {
 			req.Task = task
@@ -209,7 +223,16 @@ func (c *Crawler) HandleResult() {
 		select {
 		case result := <-c.out:
 			for _, item := range result.Items {
-				// todo : store
+
+				switch d := item.(type) {
+				// 判断其中的数据类型，如果数据类型为 DataCell
+				// 存储引擎是和每一个爬虫任务绑定在一起的，不同的爬虫任务可能会有不同的存储引擎
+				case *storage.DataCell:
+					name := d.GetTaskName()
+					task := Store.Hash[name]
+					task.Storage.Save(d)
+				}
+				//  store
 				c.Logger.Sugar().Info("获取结果 ", item)
 			}
 

@@ -2,14 +2,15 @@ package doubanbook
 
 import (
 	"fmt"
-	"github.com/donghc/crawler/collect"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/donghc/crawler/collect"
 )
 
 var (
-	cookie = "bid=tC5jgShcUIU; ll=\"108288\"; __utmc=30149280; douban-fav-remind=1; ct=y; push_doumail_num=0; __utmz=30149280.1700924224.9.2.utmcsr=accounts.douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/; __utmv=30149280.16703; push_noty_num=0; frodotk_db=\"f912931b88658561eb37b95299309023\"; ps=y; __utma=30149280.1262193242.1695303769.1701694458.1701699006.13; dbcl2=\"167037167:gpb9vz+25eM\"; ck=Qbp3; __utma=81379588.1626991796.1701702536.1701702536.1701702536.1; __utmc=81379588; __utmz=81379588.1701702536.1.1.utmcsr=douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/misc/sorry; _pk_ref.100001.3ac3=%5B%22%22%2C%22%22%2C1701702536%2C%22https%3A%2F%2Fwww.douban.com%2Fmisc%2Fsorry%3Foriginal-url%3Dhttps%3A%2F%2Fbook.douban.com%2F%22%5D; _pk_id.100001.3ac3=100bef15360db890.1701702536.; _pk_ses.100001.3ac3=1; _vwo_uuid_v2=D861FF13AEF1F55EACED7545A6B63D3D4|9cc8c7e5fea2d936ec6102b68124c80b; __yadk_uid=HUNSEAjLbN6sAEFlcwhdBT9ayaw0WyzH; __utmt=1; __utmt_douban=1; __utmb=30149280.62.5.1701702423014; __utmb=81379588.10.10.1701702536"
+	cookie = "bid=qZ8gG_-P5M0; ll=\"108288\"; __utmz=30149280.1696663356.5.5.utmcsr=baidu|utmccn=(organic)|utmcmd=organic; viewed=\"1007305\"; _pk_id.100001.3ac3=3b24b547be1b35c6.1699849766.; push_noty_num=0; push_doumail_num=0; _vwo_uuid_v2=DCBB38EF9DF817F80715096C3D1EE293B|d2f167ec2e012b3f6a02c950e5ce9b4d; __utmv=30149280.16703; ct=y; __utmz=81379588.1700806485.4.3.utmcsr=douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/misc/sorry; _vwo_uuid_v2=DCBB38EF9DF817F80715096C3D1EE293B|d2f167ec2e012b3f6a02c950e5ce9b4d; dbcl2=\"167037167:gpb9vz+25eM\"; ck=Qbp3; __utmc=30149280; __utmc=81379588; __yadk_uid=eyZktnpcn7iCE2bDNLEIRVooJh4Ls6PF; frodotk_db=\"09248aa50ae8fa331b6d9fef20baee99\"; ap_v=0,6.0; _pk_ref.100001.3ac3=%5B%22%22%2C%22%22%2C1701852235%2C%22https%3A%2F%2Fwww.douban.com%2Fmisc%2Fsorry%3Foriginal-url%3Dhttps%3A%2F%2Fbook.douban.com%2Fsubject%2F1007305%2F%22%5D; _pk_ses.100001.3ac3=1; __utma=30149280.1471592734.1691651195.1701842811.1701852235.16; __utma=81379588.1587388512.1699849766.1701842811.1701852235.6; __utmt_douban=1; __utmb=30149280.5.10.1701852235; __utmt=1; __utmb=81379588.5.10.1701852235"
 )
 
 var DoubanBookTask = &collect.Task{
@@ -121,7 +122,7 @@ func ParseTag(ctx *collect.RuleContext) (collect.ParseResult, error) {
 	result := collect.ParseResult{}
 
 	for _, m := range matches {
-		if len(result.Requests) > 10 {
+		if len(result.Requests) > 2 {
 			break
 		}
 		result.Requests = append(

@@ -1,14 +1,15 @@
 package engine
 
 import (
-	"github.com/donghc/crawler/collect"
 	"go.uber.org/zap"
+
+	"github.com/donghc/crawler/collect"
 )
 
 type Option func(opts *options)
 
 type options struct {
-	WorkCount int //并发度
+	WorkCount int // 并发度
 	Fetcher   collect.Fetcher
 	Seeds     []*collect.Task
 	Logger    *zap.Logger

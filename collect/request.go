@@ -4,11 +4,14 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"github.com/donghc/crawler/collector"
 	"net/http"
 	"regexp"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/donghc/crawler/storage"
 )
 
 type Property struct {
@@ -30,6 +33,9 @@ type Task struct {
 	Fetcher     Fetcher
 
 	Rule RuleTree //
+
+	Storage storage.Storage
+	Logger  *zap.Logger
 }
 
 // RuleContext 为自定义结构体，用于传递上下文信息，也就是当前的请求参数以及要解析的内容字节数组。
@@ -82,12 +88,13 @@ func (c *RuleContext) OutputJS(reg string) ParseResult {
 	return result
 }
 
-func (c *RuleContext) Output(data interface{}) *collector.OutputData {
-	res := &collector.OutputData{}
+func (c *RuleContext) Output(data interface{}) *storage.DataCell {
+	res := &storage.DataCell{}
 	res.Data = make(map[string]interface{})
+	res.Data["Task"] = c.Req.Task.Name
 	res.Data["Rule"] = c.Req.RuleName
 	res.Data["Data"] = data
-	res.Data["Url"] = c.Req.URL
+	res.Data["URL"] = c.Req.URL
 	res.Data["Time"] = time.Now().Format("2006-01-02 15:04:05")
 
 	return res
