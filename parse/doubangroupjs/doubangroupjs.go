@@ -1,8 +1,6 @@
 package doubangroupjs
 
 import (
-	"time"
-
 	"github.com/donghc/crawler/collect"
 )
 
@@ -12,7 +10,7 @@ var (
 var DoubangroupJSTask = &collect.TaskModel{
 	Property: collect.Property{
 		Name:     "js_find_douban_sun_room",
-		WaitTime: 1 * time.Second,
+		WaitTime: 1,
 		MaxDepth: 5,
 		Cookie:   cookie,
 	},

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"time"
 
 	"github.com/donghc/crawler/collect"
 )
@@ -18,7 +17,7 @@ var DoubanGroupTask = &collect.Task{
 	Property: collect.Property{
 		Name:     "find_douban_sun_room",
 		Cookie:   cookie,
-		WaitTime: 3 * time.Second,
+		WaitTime: 3,
 		MaxDepth: 5,
 	},
 	Rule: collect.RuleTree{

@@ -165,7 +165,7 @@ func (c *Crawler) CreateWorker() {
 		c.StoreVisited(r)
 
 		c.Logger.Sugar().Info("", r.URL)
-		body, err := r.Task.Fetcher.Get(r)
+		body, err := r.Fetch()
 		if err != nil {
 			c.Logger.Error("can not fetch ", zap.Error(err))
 			c.SetFailure(r)
@@ -206,6 +206,7 @@ func (c *Crawler) Schedule() {
 		task.Fetcher = seed.Fetcher
 		task.Storage = seed.Storage
 		task.Logger = c.Logger
+		task.Limiter = seed.Limiter
 
 		rootReqs, _ := task.Rule.Root()
 		for _, req := range rootReqs {

@@ -1,9 +1,11 @@
 package collect
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"sync"
@@ -11,16 +13,17 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/donghc/crawler/limiter"
 	"github.com/donghc/crawler/storage"
 )
 
 type Property struct {
-	Name     string        `json:"name,omitempty"` // 任务名称，需要保证唯一
-	URL      string        `json:"url,omitempty"`  // URL地址
-	Cookie   string        `json:"cookie"`         // cookie
-	WaitTime time.Duration `json:"wait_time"`      // 等待时间
-	Reload   bool          `json:"reload"`         // 是否可以重复爬取
-	MaxDepth int64         `json:"max_depth"`      // 最大深度
+	Name     string `json:"name,omitempty"` // 任务名称，需要保证唯一
+	URL      string `json:"url,omitempty"`  // URL地址
+	Cookie   string `json:"cookie"`         // cookie
+	WaitTime int64  `json:"wait_time"`      // 等待时间
+	Reload   bool   `json:"reload"`         // 是否可以重复爬取
+	MaxDepth int64  `json:"max_depth"`      // 最大深度
 }
 
 // Task 爬虫任务
@@ -36,6 +39,7 @@ type Task struct {
 
 	Storage storage.Storage
 	Logger  *zap.Logger
+	Limiter limiter.RateLimiter
 }
 
 // RuleContext 为自定义结构体，用于传递上下文信息，也就是当前的请求参数以及要解析的内容字节数组。
@@ -130,4 +134,14 @@ func (req *Request) CheckDepth() bool {
 func (req *Request) Unique() string {
 	block := md5.Sum([]byte(req.URL + req.Method))
 	return hex.EncodeToString(block[:])
+}
+
+func (req *Request) Fetch() ([]byte, error) {
+	if err := req.Task.Limiter.Wait(context.Background()); err != nil {
+		return nil, err
+	}
+	// 随机休眠
+	sleepTime := rand.Int63n(req.Task.WaitTime * 1000)
+	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
+	return req.Task.Fetcher.Get(req)
 }

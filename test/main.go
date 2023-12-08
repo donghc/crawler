@@ -1,18 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/robertkrimen/otto"
+	"time"
+
+	"golang.org/x/time/rate"
 )
 
 func main() {
-	vm := otto.New()
-	script := `
-    var n = 100
-    console.log("hello-" + n)
-    n = n-10;
-    n-10
-  `
-	value, _ := vm.Run(script)
-	fmt.Println("value:", value.String())
+	limit := rate.NewLimiter(rate.Every(500*time.Millisecond), 1)
+	for {
+		if err := limit.Wait(context.Background()); err == nil {
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
+		}
+	}
 }

@@ -65,10 +65,11 @@ func (s *SqlStore) Save(cells ...*storage.DataCell) error {
 			}
 			s.Table[tableName] = struct{}{}
 		}
+		s.dataDocker = append(s.dataDocker, cell)
 		if len(s.dataDocker) > s.BatchCount {
 			s.Flush()
+			s.dataDocker = nil
 		}
-		s.dataDocker = append(s.dataDocker, cell)
 	}
 	return nil
 }

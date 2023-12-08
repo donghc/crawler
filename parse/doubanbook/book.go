@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/donghc/crawler/collect"
 )
@@ -16,7 +15,7 @@ var (
 var DoubanBookTask = &collect.Task{
 	Property: collect.Property{
 		Name:     "douban_book_list",
-		WaitTime: 5 * time.Second,
+		WaitTime: 5,
 		MaxDepth: 5,
 		Cookie:   cookie,
 	},
