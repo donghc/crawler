@@ -1,15 +1,23 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"go-micro.dev/v4"
 	"golang.org/x/time/rate"
+	"google.golang.org/grpc"
 
 	"github.com/donghc/crawler/collect/impl"
 	"github.com/donghc/crawler/engine"
 	"github.com/donghc/crawler/limiter"
+	"github.com/donghc/crawler/proto/greeter"
 	"github.com/donghc/crawler/storage/sqlstorage"
 
+	gs "github.com/go-micro/plugins/v4/server/grpc"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/donghc/crawler/collect"
@@ -17,13 +25,18 @@ import (
 	"github.com/donghc/crawler/proxy"
 )
 
+var (
+	plugin = log.NewStdoutPlugin(zapcore.InfoLevel)
+	logger = log.NewLogger(plugin)
+)
+
 func main() {
-	doubanGroup()
+	// go doubanGroup()
+	go HandleHTTP()
+	register()
 }
 
 func doubanGroup() {
-	plugin := log.NewStdoutPlugin(zapcore.InfoLevel)
-	logger := log.NewLogger(plugin)
 
 	logger.Info("log init end ,begin start crawler task")
 
@@ -80,4 +93,48 @@ func getProxy() (proxy.ProxyFunc, error) {
 	proxyURLs := []string{"http://58.246.58.150:9002"}
 	return proxy.RoundRobinProxySwitcher(proxyURLs...)
 
+}
+
+func register() {
+
+	service := micro.NewService(
+		micro.Name("helloworld"),
+		micro.Address(":9090"),
+		micro.Server(gs.NewServer()),
+	)
+
+	service.Init()
+
+	greeter.RegisterGreeterHandler(service.Server(), new(Greeter))
+
+	err := service.Run()
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func HandleHTTP() {
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	err := greeter.RegisterGreeterGwFromEndpoint(ctx, mux, "localhost:9090", opts)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	http.ListenAndServe(":8080", mux)
+}
+
+type Greeter struct {
+}
+
+func (g *Greeter) Hello(ctx context.Context, req *greeter.Request, resp *greeter.Response) (err error) {
+	resp.Greeting = "hello" + req.Name
+
+	return nil
 }
