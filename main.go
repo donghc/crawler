@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	gs "github.com/go-micro/plugins/v4/server/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go-micro.dev/v4"
 	"golang.org/x/time/rate"
@@ -17,7 +18,6 @@ import (
 	"github.com/donghc/crawler/proto/greeter"
 	"github.com/donghc/crawler/storage/sqlstorage"
 
-	gs "github.com/go-micro/plugins/v4/server/grpc"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/donghc/crawler/collect"
@@ -98,19 +98,17 @@ func getProxy() (proxy.ProxyFunc, error) {
 func register() {
 
 	service := micro.NewService(
-		micro.Name("helloworld"),
-		micro.Address(":9090"),
 		micro.Server(gs.NewServer()),
+		micro.Address(":9090"),
+		micro.Name("go.micro.server.worker"),
 	)
 
 	service.Init()
 
 	greeter.RegisterGreeterHandler(service.Server(), new(Greeter))
 
-	err := service.Run()
-
-	if err != nil {
-		panic(err)
+	if err := service.Run(); err != nil {
+		logger.Fatal("grpc server stop")
 	}
 }
 
@@ -122,7 +120,7 @@ func HandleHTTP() {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := greeter.RegisterGreeterGwFromEndpoint(ctx, mux, "localhost:9090", opts)
+	err := greeter.RegisterGreeterGwFromEndpoint(ctx, mux, ":9090", opts)
 	if err != nil {
 		fmt.Println(err)
 	}
