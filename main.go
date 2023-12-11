@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	etcdReg "github.com/go-micro/plugins/v4/registry/etcd"
 	gs "github.com/go-micro/plugins/v4/server/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go-micro.dev/v4"
+	"go-micro.dev/v4/registry"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -97,10 +99,13 @@ func getProxy() (proxy.ProxyFunc, error) {
 
 func register() {
 
+	newRegistry := etcdReg.NewRegistry(registry.Addrs(":2379"))
+
 	service := micro.NewService(
 		micro.Server(gs.NewServer()),
 		micro.Address(":9090"),
 		micro.Name("go.micro.server.worker"),
+		micro.Registry(newRegistry),
 	)
 
 	service.Init()
