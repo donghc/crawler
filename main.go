@@ -11,6 +11,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/registry"
+	"go-micro.dev/v4/server"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -102,7 +103,7 @@ func register() {
 	newRegistry := etcdReg.NewRegistry(registry.Addrs(":2379"))
 
 	service := micro.NewService(
-		micro.Server(gs.NewServer()),
+		micro.Server(gs.NewServer(server.Id("worker1"))),
 		micro.Address(":9090"),
 		micro.Name("go.micro.server.worker"),
 		micro.Registry(newRegistry),
