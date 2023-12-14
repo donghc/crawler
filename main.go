@@ -12,6 +12,7 @@ import (
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/registry"
 	"go-micro.dev/v4/server"
+	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 
@@ -107,6 +108,7 @@ func register() {
 		micro.Address(":9090"),
 		micro.Name("go.micro.server.worker"),
 		micro.Registry(newRegistry),
+		micro.WrapHandler(logWrapper(logger)),
 	)
 
 	service.Init()
@@ -141,4 +143,18 @@ func (g *Greeter) Hello(ctx context.Context, req *greeter.Request, resp *greeter
 	resp.Greeting = "hello" + req.Name
 
 	return nil
+}
+
+func logWrapper(log *zap.Logger) server.HandlerWrapper {
+	return func(fn server.HandlerFunc) server.HandlerFunc {
+		return func(ctx context.Context, req server.Request, rsp interface{}) error {
+			log.Info("recieve request",
+				zap.String("method", req.Method()),
+				zap.String("Service", req.Service()),
+				zap.Reflect("request param:", req.Body()),
+			)
+			err := fn(ctx, req, rsp)
+			return err
+		}
+	}
 }
