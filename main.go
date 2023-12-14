@@ -113,14 +113,14 @@ func register() {
 
 	service.Init()
 
-	greeter.RegisterGreeterHandler(service.Server(), new(Greeter))
+	_ = greeter.RegisterGreeterHandler(service.Server(), new(Greeter))
 
 	if err := service.Run(); err != nil {
 		logger.Fatal("grpc server stop")
 	}
 }
 
-func HandleHTTP() {
+func HandleHTTP() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -133,7 +133,9 @@ func HandleHTTP() {
 		fmt.Println(err)
 	}
 
-	http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":8080", mux)
+
+	return err
 }
 
 type Greeter struct {
